@@ -1,0 +1,8 @@
+tests/
+docs/
+plex-plugin/
+.github/
+.gitignore
+.mcpbignore
+*.md
+!README.md
