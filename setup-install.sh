@@ -8,8 +8,8 @@ echo "====================="
 echo
 
 # Configuration
-INSTALL_DIR="$HOME/git/plex-claude-plugin"
-CONFIG_DIR="$HOME/.config/plex-mcp"
+INSTALL_DIR="$HOME/git/videodrome-plugin"
+CONFIG_DIR="$HOME/.config/videodrome"
 CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -113,7 +113,7 @@ config["mcpServers"]["plex"] = {
         "run",
         "--directory",
         install_dir,
-        "plex-mcp"
+        "videodrome"
     ]
 }
 
@@ -138,7 +138,7 @@ cat > "$INSTALL_DIR/update.sh" << 'UPDATEEOF'
 #!/bin/bash
 # Update Plex MCP Server
 
-INSTALL_DIR="$HOME/git/plex-claude-plugin"
+INSTALL_DIR="$HOME/git/videodrome-plugin"
 cd "$INSTALL_DIR"
 
 echo "Updating Plex MCP Server..."
@@ -159,7 +159,7 @@ echo "Installation: $INSTALL_DIR"
 echo
 echo "Next steps:"
 echo "1. Edit config:  nano $CONFIG_DIR/.env"
-echo "2. Test server:  cd $INSTALL_DIR && uv run plex-mcp"
+echo "2. Test server:  cd $INSTALL_DIR && uv run videodrome"
 echo "3. Restart Claude Desktop"
 echo
 echo "To update later: $INSTALL_DIR/update.sh"

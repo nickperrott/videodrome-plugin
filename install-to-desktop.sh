@@ -40,10 +40,10 @@ config["mcpServers"]["plex"] = {
     "args": [
         "run",
         "--directory",
-        "/Users/nick/conductor/workspaces/plex-claude-plugin/montreal-v1",
+        "/Users/nick/conductor/workspaces/videodrome-plugin/montreal-v1",
         "--env-file",
-        "/Users/nick/conductor/workspaces/plex-claude-plugin/montreal-v1/.env",
-        "plex-mcp"
+        "/Users/nick/conductor/workspaces/videodrome-plugin/montreal-v1/.env",
+        "videodrome"
     ]
 }
 
@@ -67,10 +67,10 @@ config['mcpServers']['plex'] = {
     'args': [
         'run',
         '--directory',
-        '/Users/nick/conductor/workspaces/plex-claude-plugin/montreal-v1',
+        '/Users/nick/conductor/workspaces/videodrome-plugin/montreal-v1',
         '--env-file',
-        '/Users/nick/conductor/workspaces/plex-claude-plugin/montreal-v1/.env',
-        'plex-mcp'
+        '/Users/nick/conductor/workspaces/videodrome-plugin/montreal-v1/.env',
+        'videodrome'
     ]
 }
 with open(config_file, 'w') as f:

@@ -63,7 +63,7 @@ Create repo structure, pyproject.toml, conftest.py with shared fixtures, all __i
 - Scope: File copy/rename/move, path restrictions, extension whitelist, SQLite history log, execute_naming_plan, execute_ingest
 
 **Subagent D: Claude Code Plugin + Desktop Extension**
-- Files: plex-plugin/**, manifest.json, docs/adr/**
+- Files: videodrome-plugin/**, manifest.json, docs/adr/**
 - Tests: tests/test_safety_hook.py, tests/test_plugin_structure.py
 - Scope: All 8 commands, 4 agents, safety hook, session hook, SKILL.md, .mcpb manifest, plugin.json, .mcp.json, ADRs
 

@@ -67,7 +67,7 @@ async def test_server_structure():
     print("1. A running Plex Media Server")
     print("2. Valid PLEX_URL and PLEX_TOKEN")
     print("3. Valid TMDB_API_KEY")
-    print("4. Run with: uv run plex-mcp")
+    print("4. Run with: uv run videodrome")
 
     return True
 

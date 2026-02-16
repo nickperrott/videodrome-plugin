@@ -60,7 +60,7 @@ hostname -I
 ### Option A: Use the Interactive Configure Command (Recommended)
 
 ```bash
-cd /path/to/plex-claude-plugin/montreal-v1
+cd /path/to/videodrome-plugin/montreal-v1
 uv run python -c "from plex_plugin.hooks.configure import configure; configure()"
 ```
 
@@ -75,7 +75,7 @@ This will:
 Create a `.env` file in the project root:
 
 ```bash
-cd /path/to/plex-claude-plugin/montreal-v1
+cd /path/to/videodrome-plugin/montreal-v1
 cat > .env << 'EOF'
 # Required
 PLEX_URL=http://192.168.1.100:32400
@@ -104,10 +104,10 @@ export PLEX_MEDIA_ROOT=/path/to/your/media
 
 ```bash
 # Load .env file and run server
-uv run --env-file .env plex-mcp
+uv run --env-file .env videodrome
 
 # Or if you exported variables
-uv run plex-mcp
+uv run videodrome
 ```
 
 You should see:
@@ -129,11 +129,11 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "uv",
       "args": [
         "--directory",
-        "/FULL/PATH/TO/plex-claude-plugin/montreal-v1",
+        "/FULL/PATH/TO/videodrome-plugin/montreal-v1",
         "run",
         "--env-file",
         ".env",
-        "plex-mcp"
+        "videodrome"
       ]
     }
   }
@@ -150,13 +150,13 @@ If using Claude Code, install the plugin:
 
 ```bash
 # From the project directory
-claude plugin install plex-plugin
+claude plugin install videodrome-plugin
 ```
 
 Then use commands like:
-- `/plex:status` - Check server status
-- `/plex:identify` - Identify a media file
-- `/plex:scan` - Trigger a library scan
+- `/videodrome:status` - Check server status
+- `/videodrome:identify` - Identify a media file
+- `/videodrome:scan` - Trigger a library scan
 
 ## Configuration Reference
 
@@ -213,7 +213,7 @@ env | grep PLEX
 env | grep TMDB
 
 # Try running with debug output
-uv run --env-file .env plex-mcp 2>&1 | tee server.log
+uv run --env-file .env videodrome 2>&1 | tee server.log
 ```
 
 ## Examples
@@ -249,8 +249,8 @@ PLEX_WATCHER_AUTO_START=true
 
 Once configured:
 
-1. **Test basic operations**: Use `/plex:status` to verify connection
-2. **Identify media files**: Use `/plex:identify` on sample files
+1. **Test basic operations**: Use `/videodrome:status` to verify connection
+2. **Identify media files**: Use `/videodrome:identify` on sample files
 3. **Set up auto-ingest**: Configure watcher for automated processing
 4. **Explore commands**: Try all 8 plugin commands
 

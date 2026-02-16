@@ -460,3 +460,167 @@ async def test_watcher_duplicate_detection(temp_ingest_dir, matcher, file_manage
 
             # Should NOT copy (duplicate detected)
             assert not mock_copy.called
+
+
+@pytest.mark.asyncio
+async def test_process_torrent_files_missing_file_not_marked_processed(
+    temp_ingest_dir, matcher, file_manager, history_db
+):
+    """Missing torrent files should keep the torrent eligible for retry."""
+    watcher = IngestWatcher(
+        ingest_dir=temp_ingest_dir,
+        matcher=matcher,
+        file_manager=file_manager,
+        history=history_db
+    )
+
+    missing_file = temp_ingest_dir / "missing-file.mkv"
+    result = await watcher._process_torrent_files({
+        "id": 1,
+        "hash": "missing-hash",
+        "name": "Missing Torrent",
+        "files": [str(missing_file)]
+    })
+
+    assert result["missing_count"] == 1
+    assert result["mark_processed"] is False
+
+
+@pytest.mark.asyncio
+async def test_process_torrent_files_empty_list_marked_processed(
+    temp_ingest_dir, matcher, file_manager, history_db
+):
+    """Empty torrent file lists are terminal and should be marked processed."""
+    watcher = IngestWatcher(
+        ingest_dir=temp_ingest_dir,
+        matcher=matcher,
+        file_manager=file_manager,
+        history=history_db
+    )
+
+    result = await watcher._process_torrent_files({
+        "id": 10,
+        "hash": "empty-hash",
+        "name": "Empty Torrent",
+        "files": []
+    })
+
+    assert result["video_file_count"] == 0
+    assert result["mark_processed"] is True
+
+
+@pytest.mark.asyncio
+async def test_process_torrent_files_no_auto_remove_when_queued(
+    temp_ingest_dir, matcher, file_manager, history_db, mock_tmdb_movie_result
+):
+    """Queued torrent files must not trigger auto-remove."""
+    transmission_client = MagicMock()
+    transmission_client.remove_torrent = MagicMock()
+
+    watcher = IngestWatcher(
+        ingest_dir=temp_ingest_dir,
+        matcher=matcher,
+        file_manager=file_manager,
+        history=history_db,
+        auto_ingest=True,
+        confidence_threshold=0.99,
+        transmission_client=transmission_client
+    )
+    watcher.transmission_auto_remove = True
+
+    test_file = temp_ingest_dir / "queued-file.mkv"
+    test_file.write_text("test content")
+
+    with patch.object(matcher, "match_media", new_callable=AsyncMock) as mock_match:
+        mock_match.return_value = {
+            "tmdb_id": 27205,
+            "tmdb_result": mock_tmdb_movie_result,
+            "confidence": 0.80,
+            "plex_path": "/Movies/Inception (2010) {tmdb-27205}/Inception (2010) {tmdb-27205}.mkv",
+            "parsed": {"title": "Inception", "year": 2010}
+        }
+
+        result = await watcher._process_torrent_files({
+            "id": 2,
+            "hash": "queued-hash",
+            "name": "Queued Torrent",
+            "files": [str(test_file)]
+        })
+
+    assert result["queued_count"] == 1
+    assert result["mark_processed"] is True
+    transmission_client.remove_torrent.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_transmission_poll_loop_does_not_mark_processed_when_retry_needed(
+    temp_ingest_dir, matcher, file_manager, history_db
+):
+    """Torrent hash should not be marked processed when processing asks for retry."""
+    transmission_client = MagicMock()
+    transmission_client.is_connected = True
+    transmission_client.get_completed_torrents.return_value = [{
+        "id": 3,
+        "hash": "retry-hash",
+        "name": "Retry Torrent",
+        "files": []
+    }]
+
+    watcher = IngestWatcher(
+        ingest_dir=temp_ingest_dir,
+        matcher=matcher,
+        file_manager=file_manager,
+        history=history_db,
+        transmission_client=transmission_client
+    )
+
+    with patch.object(
+        watcher,
+        "_process_torrent_files",
+        new=AsyncMock(return_value={
+            "mark_processed": False,
+            "missing_count": 1,
+            "error_count": 0
+        })
+    ):
+        with patch("server.watcher.asyncio.sleep", new=AsyncMock(side_effect=[None, asyncio.CancelledError])):
+            await watcher._transmission_poll_loop()
+
+    assert "retry-hash" not in watcher._processed_torrent_hashes
+
+
+@pytest.mark.asyncio
+async def test_transmission_poll_loop_marks_processed_when_terminal(
+    temp_ingest_dir, matcher, file_manager, history_db
+):
+    """Torrent hash should be marked processed when processing is terminal."""
+    transmission_client = MagicMock()
+    transmission_client.is_connected = True
+    transmission_client.get_completed_torrents.return_value = [{
+        "id": 4,
+        "hash": "terminal-hash",
+        "name": "Terminal Torrent",
+        "files": []
+    }]
+
+    watcher = IngestWatcher(
+        ingest_dir=temp_ingest_dir,
+        matcher=matcher,
+        file_manager=file_manager,
+        history=history_db,
+        transmission_client=transmission_client
+    )
+
+    with patch.object(
+        watcher,
+        "_process_torrent_files",
+        new=AsyncMock(return_value={
+            "mark_processed": True,
+            "missing_count": 0,
+            "error_count": 0
+        })
+    ):
+        with patch("server.watcher.asyncio.sleep", new=AsyncMock(side_effect=[None, asyncio.CancelledError])):
+            await watcher._transmission_poll_loop()
+
+    assert "terminal-hash" in watcher._processed_torrent_hashes
