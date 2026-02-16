@@ -156,7 +156,7 @@ The watcher is now monitoring for new files. Files will be:
 - Automatically ingested if confidence >= 0.85
 - Added to manual review queue if confidence < 0.85
 
-Use /plex:watch status to check progress.
+Use /videodrome:watch status to check progress.
 ```
 
 ### User Request
@@ -226,7 +226,7 @@ Rename file to include year, e.g.:
   The.Thing.1982.mkv
 
 Or manually review:
-  /plex:review --file=/data/ingest/The.Thing.mkv
+  /videodrome:review --file=/data/ingest/The.Thing.mkv
 ```
 
 ## Configuration

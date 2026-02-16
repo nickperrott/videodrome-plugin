@@ -1,11 +1,11 @@
-# /plex:configure
+# /videodrome:configure
 
 Configure Plex MCP server environment variables interactively.
 
 ## Usage
 
 ```
-/plex:configure
+/videodrome:configure
 ```
 
 ## Description
@@ -67,7 +67,7 @@ TMDb API Key: xyz789...
 ✅ Configuration Complete!
 
 Next steps:
-1. Test the server: uv run --env-file .env plex-mcp
+1. Test the server: uv run --env-file .env videodrome
 2. Restart Claude Desktop to pick up new config
 ```
 
@@ -118,7 +118,7 @@ This command runs the `configure.py` script directly via shell execution. It doe
 
 The wizard will still save your configuration even if connection tests fail. You can:
 1. Fix the issue (check Plex is running, verify token)
-2. Rerun `/plex:configure` to update
+2. Rerun `/videodrome:configure` to update
 3. Or manually edit `.env` file
 
 ### Can't find Plex token
@@ -138,7 +138,7 @@ Make sure you're using:
 
 ## Related Commands
 
-- `/plex:status` - Check server status after configuration
+- `/videodrome:status` - Check server status after configuration
 - See `QUICKSTART.md` for manual configuration guide
 
 ## Notes

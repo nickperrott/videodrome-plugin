@@ -1,11 +1,11 @@
-# /plex:review - Review Pending Queue Items
+# /videodrome:review - Review Pending Queue Items
 
 Review and process files in the manual review queue (low-confidence matches).
 
 ## Usage
 
 ```
-/plex:review [--all] [--file=<path>] [--approve] [--reject]
+/videodrome:review [--all] [--file=<path>] [--approve] [--reject]
 ```
 
 ## Arguments
@@ -18,11 +18,11 @@ Review and process files in the manual review queue (low-confidence matches).
 ## Examples
 
 ```
-/plex:review
-/plex:review --all
-/plex:review --file=/data/ingest/movie.mkv
-/plex:review --file=/data/ingest/movie.mkv --approve
-/plex:review --file=/data/ingest/movie.mkv --reject
+/videodrome:review
+/videodrome:review --all
+/videodrome:review --file=/data/ingest/movie.mkv
+/videodrome:review --file=/data/ingest/movie.mkv --approve
+/videodrome:review --file=/data/ingest/movie.mkv --reject
 ```
 
 ## What it does
@@ -86,7 +86,7 @@ Manual Review Queue: 3 items
        Genre: Horror, Science Fiction
        Rating: 6.2/10
 
-    Command: /plex:review --file=/data/ingest/The.Thing.mkv
+    Command: /videodrome:review --file=/data/ingest/The.Thing.mkv
 
 [2] /data/ingest/random.movie.avi
     Parsed: random movie (no year)
@@ -140,9 +140,9 @@ TMDb Search Results:
     /Movies/The Thing (2011)/The Thing (2011).mkv
 
 Actions:
-- To approve match #1: /plex:review --file=/data/ingest/The.Thing.mkv --approve
-- To reject: /plex:review --file=/data/ingest/The.Thing.mkv --reject
-- To search manually: /plex:identify "The Thing 1982"
+- To approve match #1: /videodrome:review --file=/data/ingest/The.Thing.mkv --approve
+- To reject: /videodrome:review --file=/data/ingest/The.Thing.mkv --reject
+- To search manually: /videodrome:identify "The Thing 1982"
 ```
 
 ### Approval Output

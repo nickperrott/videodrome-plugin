@@ -1,11 +1,11 @@
-# /plex:ingest - Execute Full Ingest Pipeline
+# /videodrome:ingest - Execute Full Ingest Pipeline
 
 Runs the complete ingest pipeline: identify -> rename -> copy -> scan -> log.
 
 ## Usage
 
 ```
-/plex:ingest <source_path> [--auto] [--threshold=0.85]
+/videodrome:ingest <source_path> [--auto] [--threshold=0.85]
 ```
 
 ## Arguments
@@ -17,9 +17,9 @@ Runs the complete ingest pipeline: identify -> rename -> copy -> scan -> log.
 ## Examples
 
 ```
-/plex:ingest /data/downloads/Movie.2024.mkv
-/plex:ingest /data/downloads/season1 --auto --threshold=0.90
-/plex:ingest /tmp/new_media
+/videodrome:ingest /data/downloads/Movie.2024.mkv
+/videodrome:ingest /data/downloads/season1 --auto --threshold=0.90
+/videodrome:ingest /tmp/new_media
 ```
 
 ## What it does

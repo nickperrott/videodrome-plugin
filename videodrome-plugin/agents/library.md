@@ -70,7 +70,7 @@ Response:
 1. Identifies target library (Movies)
 2. Calls scan_library("Movies")
 3. Reports scan trigger status
-4. Suggests using /plex:status to check progress
+4. Suggests using /videodrome:status to check progress
 ```
 
 ### Search and Analysis
@@ -139,7 +139,7 @@ I'll trigger a scan of your Movies library.
 The scan is running in the background. This may take several minutes
 for large libraries.
 
-Use /plex:status to check scan progress.
+Use /videodrome:status to check scan progress.
 ```
 
 ## Error Handling

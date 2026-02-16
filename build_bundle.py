@@ -4,7 +4,7 @@ Build an MCP bundle (.mcpb) for distribution.
 
 An .mcpb file is a zip archive containing:
 - server/ directory with all Python code
-- plex-plugin/ directory with plugin metadata
+- videodrome-plugin/ directory with plugin metadata
 - pyproject.toml for dependencies
 - README.md and other docs
 """
@@ -17,13 +17,13 @@ import json
 def build_bundle():
     """Build the .mcpb bundle file."""
 
-    bundle_name = "plex-mcp-0.1.0.mcpb"
+    bundle_name = "videodrome-0.1.0.mcpb"
     base_dir = Path(__file__).parent
 
     # Files to include
     include_patterns = [
         "server/**/*.py",
-        "plex-plugin/**/*",
+        "videodrome-plugin/**/*",
         "pyproject.toml",
         "README.md",
         "QUICKSTART.md",
@@ -78,7 +78,7 @@ PLEX_WATCHER_AUTO_START=true
                 print(f"  + {arcname}")
 
         # Add plugin files
-        for plugin_file in (base_dir / "plex-plugin").rglob("*"):
+        for plugin_file in (base_dir / "videodrome-plugin").rglob("*"):
             if plugin_file.is_file() and "__pycache__" not in str(plugin_file):
                 arcname = plugin_file.relative_to(base_dir)
                 bundle.write(plugin_file, arcname)
@@ -104,7 +104,7 @@ PLEX_WATCHER_AUTO_START=true
         install_script = """#!/bin/bash
 # Plex MCP Installation Script
 
-INSTALL_DIR="$HOME/.local/share/plex-mcp"
+INSTALL_DIR="$HOME/.local/share/videodrome"
 CONFIG_FILE="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 
 echo "Installing Plex MCP Server..."
@@ -112,7 +112,7 @@ echo
 
 # Extract bundle
 mkdir -p "$INSTALL_DIR"
-unzip -q plex-mcp-*.mcpb -d "$INSTALL_DIR"
+unzip -q videodrome-*.mcpb -d "$INSTALL_DIR"
 
 # Setup virtual environment
 cd "$INSTALL_DIR"
@@ -132,7 +132,7 @@ import json
 import os
 
 config_file = os.path.expanduser("~/Library/Application Support/Claude/claude_desktop_config.json")
-install_dir = os.path.expanduser("~/.local/share/plex-mcp")
+install_dir = os.path.expanduser("~/.local/share/videodrome")
 
 try:
     with open(config_file, 'r') as f:
@@ -151,7 +151,7 @@ config["mcpServers"]["plex"] = {
         install_dir,
         "--env-file",
         f"{install_dir}/.env",
-        "plex-mcp"
+        "videodrome"
     ]
 }
 

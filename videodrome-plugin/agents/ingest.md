@@ -182,7 +182,7 @@ Status: COMPLETED
 Time: 2m 15s
 Average speed: 62 MB/s
 
-Use /plex:status to check library scan progress.
+Use /videodrome:status to check library scan progress.
 ```
 
 ### User Request
@@ -201,23 +201,23 @@ Manual Review Queue: 3 items
     - The Thing (1982) [ID: 1091]
     - The Thing (2011) [ID: 64686]
 
-    Command: /plex:review --file=/data/downloads/The.Thing.mkv
+    Command: /videodrome:review --file=/data/downloads/The.Thing.mkv
 
 [2] /data/downloads/foreign.film.mkv
     Added: 2024-02-10 13:15
     Confidence: 0.52
     Issue: Ambiguous title, multiple matches
 
-    Command: /plex:review --file=/data/downloads/foreign.film.mkv
+    Command: /videodrome:review --file=/data/downloads/foreign.film.mkv
 
 [3] /data/downloads/random.avi
     Added: 2024-02-10 12:00
     Confidence: 0.45
     Issue: No confident TMDb match
 
-    Command: /plex:review --file=/data/downloads/random.avi
+    Command: /videodrome:review --file=/data/downloads/random.avi
 
-Use /plex:review to process queue items.
+Use /videodrome:review to process queue items.
 ```
 
 ## Error Handling

@@ -1,11 +1,11 @@
-# /plex:identify - Identify Media Files
+# /videodrome:identify - Identify Media Files
 
 Analyzes media filenames using guessit and matches them against TMDb to identify movies/TV shows.
 
 ## Usage
 
 ```
-/plex:identify <path_or_filename> [--batch]
+/videodrome:identify <path_or_filename> [--batch]
 ```
 
 ## Arguments
@@ -16,9 +16,9 @@ Analyzes media filenames using guessit and matches them against TMDb to identify
 ## Examples
 
 ```
-/plex:identify "The.Matrix.1999.1080p.BluRay.mkv"
-/plex:identify /data/ingest/new_movies --batch
-/plex:identify "Breaking.Bad.S01E01.720p.mkv"
+/videodrome:identify "The.Matrix.1999.1080p.BluRay.mkv"
+/videodrome:identify /data/ingest/new_movies --batch
+/videodrome:identify "Breaking.Bad.S01E01.720p.mkv"
 ```
 
 ## What it does

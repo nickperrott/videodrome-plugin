@@ -1,12 +1,12 @@
 {
   "plugin_version": "0.1.0",
   "plugin_format": "claude-code-v1",
-  "name": "plex",
-  "display_name": "Plex Media Server",
-  "description": "Manage Plex Media Server - library scanning, media identification, and automated ingestion",
+  "name": "videodrome",
+  "display_name": "Videodrome",
+  "description": "Manage your video library - download, identify, organize, and ingest media with Plex, TMDb, and Transmission",
   "author": "Nick Perrott",
   "license": "MIT",
-  "mcp_server": "plex-media-server",
+  "mcp_server": "videodrome",
   "commands": [
     {
       "name": "scan",

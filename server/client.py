@@ -187,20 +187,24 @@ class PlexAPIClient:
         return await asyncio.to_thread(_sync_get_server_info)
 
 
-def create_plex_client() -> PlexAPIClient:
-    """Factory function to create a PlexClient from environment variables.
+def create_plex_client(plex_url: str = None, plex_token: str = None) -> PlexAPIClient:
+    """Factory function to create a PlexClient from environment variables or parameters.
 
-    Reads PLEX_URL and PLEX_TOKEN from environment and creates a
-    PlexAPIClient instance.
+    Args:
+        plex_url: Plex server URL (defaults to VIDEODROME_PLEX_URL or PLEX_URL env var)
+        plex_token: Plex auth token (defaults to VIDEODROME_PLEX_TOKEN or PLEX_TOKEN env var)
 
     Returns:
         Configured PlexAPIClient instance
 
     Raises:
-        ValueError: If PLEX_URL or PLEX_TOKEN environment variables are missing
+        ValueError: If plex_url or plex_token are missing
     """
-    plex_url = os.environ.get("PLEX_URL")
-    plex_token = os.environ.get("PLEX_TOKEN")
+    # Allow parameters to override environment variables
+    if plex_url is None:
+        plex_url = os.environ.get("VIDEODROME_PLEX_URL") or os.environ.get("PLEX_URL")
+    if plex_token is None:
+        plex_token = os.environ.get("VIDEODROME_PLEX_TOKEN") or os.environ.get("PLEX_TOKEN")
 
     if not plex_url:
         raise ValueError("PLEX_URL environment variable is required")

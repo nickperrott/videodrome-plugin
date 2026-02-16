@@ -1,11 +1,11 @@
-# /plex:rename - Preview and Execute Rename Plan
+# /videodrome:rename - Preview and Execute Rename Plan
 
 Generates and executes renaming plans to organize media files according to Plex naming conventions.
 
 ## Usage
 
 ```
-/plex:rename <source_path> [--preview] [--execute] [--dry-run]
+/videodrome:rename <source_path> [--preview] [--execute] [--dry-run]
 ```
 
 ## Arguments
@@ -18,9 +18,9 @@ Generates and executes renaming plans to organize media files according to Plex 
 ## Examples
 
 ```
-/plex:rename /data/ingest/new_movie.mkv --preview
-/plex:rename /data/ingest/season1 --execute
-/plex:rename /data/ingest --dry-run
+/videodrome:rename /data/ingest/new_movie.mkv --preview
+/videodrome:rename /data/ingest/season1 --execute
+/videodrome:rename /data/ingest --dry-run
 ```
 
 ## What it does

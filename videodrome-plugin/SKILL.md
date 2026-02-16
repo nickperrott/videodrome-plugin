@@ -14,130 +14,130 @@ This plugin adds Plex administration commands to Claude Code, allowing you to:
 
 ## Commands
 
-### /plex:scan - Scan Plex Library
+### /videodrome:scan - Scan Plex Library
 
 Triggers a library scan to refresh Plex's metadata.
 
 ```
-/plex:scan [library_name]
+/videodrome:scan [library_name]
 ```
 
 Examples:
-- `/plex:scan Movies` - Scan Movies library only
-- `/plex:scan` - Scan all libraries
+- `/videodrome:scan Movies` - Scan Movies library only
+- `/videodrome:scan` - Scan all libraries
 
 **Safety: WRITE** - Requires confirmation (resource-intensive)
 
 ---
 
-### /plex:identify - Identify Media Files
+### /videodrome:identify - Identify Media Files
 
 Analyzes media filenames using guessit and matches against TMDb.
 
 ```
-/plex:identify <path_or_filename> [--batch]
+/videodrome:identify <path_or_filename> [--batch]
 ```
 
 Examples:
-- `/plex:identify "The.Matrix.1999.1080p.mkv"`
-- `/plex:identify /data/ingest --batch`
+- `/videodrome:identify "The.Matrix.1999.1080p.mkv"`
+- `/videodrome:identify /data/ingest --batch`
 
 **Safety: READ** - Auto-approved (analysis only, no modifications)
 
 ---
 
-### /plex:rename - Preview and Execute Rename Plan
+### /videodrome:rename - Preview and Execute Rename Plan
 
 Generates and executes renaming plans for Plex naming conventions.
 
 ```
-/plex:rename <source_path> [--preview|--execute|--dry-run]
+/videodrome:rename <source_path> [--preview|--execute|--dry-run]
 ```
 
 Examples:
-- `/plex:rename /data/ingest/movie.mkv --preview` (default)
-- `/plex:rename /data/ingest/season1 --execute`
+- `/videodrome:rename /data/ingest/movie.mkv --preview` (default)
+- `/videodrome:rename /data/ingest/season1 --execute`
 
 **Safety: WRITE** - Requires confirmation for --execute
 
 ---
 
-### /plex:ingest - Execute Full Ingest Pipeline
+### /videodrome:ingest - Execute Full Ingest Pipeline
 
 Runs complete ingest: identify → rename → copy → scan → log.
 
 ```
-/plex:ingest <source_path> [--auto] [--threshold=0.85]
+/videodrome:ingest <source_path> [--auto] [--threshold=0.85]
 ```
 
 Examples:
-- `/plex:ingest /data/downloads/Movie.2024.mkv`
-- `/plex:ingest /data/downloads/batch --auto --threshold=0.90`
+- `/videodrome:ingest /data/downloads/Movie.2024.mkv`
+- `/videodrome:ingest /data/downloads/batch --auto --threshold=0.90`
 
 **Safety: WRITE** - Requires confirmation (modifies filesystem and Plex)
 
 ---
 
-### /plex:status - Server and Library Status
+### /videodrome:status - Server and Library Status
 
 Display current Plex server, library, and queue status.
 
 ```
-/plex:status [--libraries] [--queue] [--history]
+/videodrome:status [--libraries] [--queue] [--history]
 ```
 
 Examples:
-- `/plex:status` - Basic status
-- `/plex:status --libraries --queue` - Detailed view
+- `/videodrome:status` - Basic status
+- `/videodrome:status --libraries --queue` - Detailed view
 
 **Safety: READ** - Auto-approved (queries only)
 
 ---
 
-### /plex:plan - Generate Ingest Plan
+### /videodrome:plan - Generate Ingest Plan
 
 Creates detailed ingest plan without executing operations.
 
 ```
-/plex:plan <source_path> [--threshold=0.85] [--format=table|json]
+/videodrome:plan <source_path> [--threshold=0.85] [--format=table|json]
 ```
 
 Examples:
-- `/plex:plan /data/downloads/movies`
-- `/plex:plan /data/downloads --format=json`
+- `/videodrome:plan /data/downloads/movies`
+- `/videodrome:plan /data/downloads --format=json`
 
 **Safety: READ** - Auto-approved (planning only, no execution)
 
 ---
 
-### /plex:watch - Manage File Watcher
+### /videodrome:watch - Manage File Watcher
 
 Control background file watcher for automatic ingest.
 
 ```
-/plex:watch [start|stop|restart|status]
+/videodrome:watch [start|stop|restart|status]
 ```
 
 Examples:
-- `/plex:watch` - Show status
-- `/plex:watch start` - Start monitoring
-- `/plex:watch stop` - Stop monitoring
+- `/videodrome:watch` - Show status
+- `/videodrome:watch start` - Start monitoring
+- `/videodrome:watch stop` - Stop monitoring
 
 **Safety: WRITE** - Requires confirmation for start/stop/restart
 
 ---
 
-### /plex:review - Review Pending Queue Items
+### /videodrome:review - Review Pending Queue Items
 
 Review and process files in manual review queue.
 
 ```
-/plex:review [--all] [--file=<path>] [--approve] [--reject]
+/videodrome:review [--all] [--file=<path>] [--approve] [--reject]
 ```
 
 Examples:
-- `/plex:review` - List pending items
-- `/plex:review --file=/data/ingest/movie.mkv --approve`
+- `/videodrome:review` - List pending items
+- `/videodrome:review --file=/data/ingest/movie.mkv --approve`
 
 **Safety: MIXED** - List is READ, approve/reject is WRITE
 
@@ -244,26 +244,26 @@ Example:
 
 ### One-time Import
 ```
-1. /plex:identify /data/downloads/movies --batch
-2. /plex:plan /data/downloads/movies
-3. /plex:ingest /data/downloads/movies
-4. /plex:status --history
+1. /videodrome:identify /data/downloads/movies --batch
+2. /videodrome:plan /data/downloads/movies
+3. /videodrome:ingest /data/downloads/movies
+4. /videodrome:status --history
 ```
 
 ### Automated Monitoring
 ```
 1. Configure PLEX_AUTO_INGEST=true and PLEX_INGEST_DIR
-2. /plex:watch start
+2. /videodrome:watch start
 3. Drop files into ingest directory
 4. High-confidence files auto-process
-5. /plex:review for low-confidence matches
+5. /videodrome:review for low-confidence matches
 ```
 
 ### Manual Review
 ```
-1. /plex:review --all
-2. /plex:review --file=/path/to/file.mkv
-3. /plex:review --file=/path/to/file.mkv --approve
+1. /videodrome:review --all
+2. /videodrome:review --file=/path/to/file.mkv
+3. /videodrome:review --file=/path/to/file.mkv --approve
 ```
 
 ## Technical Details
@@ -318,7 +318,7 @@ Supported extensions: `.mkv`, `.mp4`, `.avi`, `.m4v`, `.ts`, `.wmv`, `.mov`
 ## Support
 
 For issues, feature requests, or questions:
-- GitHub: https://github.com/yourusername/plex-claude-plugin
+- GitHub: https://github.com/yourusername/videodrome-plugin
 - Documentation: See `/docs/` directory
 - Examples: See `/examples/` directory
 

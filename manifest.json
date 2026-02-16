@@ -1,14 +1,14 @@
 {
   "manifest_version": "0.4",
-  "name": "plex-media-server",
-  "display_name": "Plex Media Server",
-  "description": "Manage your Plex Media Server - library scanning, media file naming, and automated ingestion",
+  "name": "videodrome",
+  "display_name": "Videodrome",
+  "description": "Manage your video library - download, identify, organize, and ingest media with Plex, TMDb, and Transmission integration",
   "version": "0.1.0",
   "author": "Nick Perrott",
   "license": "MIT",
-  "homepage": "https://github.com/yourusername/plex-claude-plugin",
-  "repository": "https://github.com/yourusername/plex-claude-plugin",
-  "keywords": ["plex", "media", "tmdb", "automation", "ingest", "library"],
+  "homepage": "https://github.com/yourusername/videodrome-plugin",
+  "repository": "https://github.com/yourusername/videodrome-plugin",
+  "keywords": ["videodrome", "video", "plex", "tmdb", "transmission", "automation", "media"],
   "server": {
     "type": "uv",
     "module": "server.main",
@@ -16,12 +16,12 @@
   },
   "bundle": {
     "type": "mcpb",
-    "plugin_directory": "plex-plugin",
+    "plugin_directory": "videodrome-plugin",
     "include": [
       "server/**/*.py",
-      "plex-plugin/**/*.md",
-      "plex-plugin/**/*.py",
-      "plex-plugin/**/*.json",
+      "videodrome-plugin/**/*.md",
+      "videodrome-plugin/**/*.py",
+      "videodrome-plugin/**/*.json",
       "pyproject.toml",
       "README.md",
       "LICENSE"

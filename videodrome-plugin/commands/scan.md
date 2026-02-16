@@ -1,11 +1,11 @@
-# /plex:scan - Scan Plex Library
+# /videodrome:scan - Scan Plex Library
 
 Triggers a library scan to refresh Plex's metadata for all or specific libraries.
 
 ## Usage
 
 ```
-/plex:scan [library_name]
+/videodrome:scan [library_name]
 ```
 
 ## Arguments
@@ -15,9 +15,9 @@ Triggers a library scan to refresh Plex's metadata for all or specific libraries
 ## Examples
 
 ```
-/plex:scan Movies
-/plex:scan TV Shows
-/plex:scan
+/videodrome:scan Movies
+/videodrome:scan TV Shows
+/videodrome:scan
 ```
 
 ## What it does
@@ -54,4 +54,4 @@ Returns a summary of:
 - Scanning is an asynchronous operation on the Plex server
 - Large libraries may take several minutes to complete
 - The command returns immediately after triggering the scan
-- Use `/plex:status` to check scan progress
+- Use `/videodrome:status` to check scan progress

@@ -40,7 +40,7 @@ MCP Server (FastMCP)
 ### 1. Interactive Configuration (Recommended)
 
 ```bash
-cd plex-claude-plugin/montreal-v1
+cd videodrome-plugin/montreal-v1
 ./setup-config.sh
 ```
 
@@ -52,7 +52,7 @@ This wizard will:
 ### 2. Test the Server
 
 ```bash
-uv run --env-file .env plex-mcp
+uv run --env-file .env videodrome
 ```
 
 You should see: `Plex MCP Server started successfully!`
@@ -67,8 +67,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
     "plex": {
       "command": "uv",
       "args": [
-        "--directory", "/FULL/PATH/TO/plex-claude-plugin/montreal-v1",
-        "run", "--env-file", ".env", "plex-mcp"
+        "--directory", "/FULL/PATH/TO/videodrome-plugin/montreal-v1",
+        "run", "--env-file", ".env", "videodrome"
       ]
     }
   }
@@ -81,12 +81,12 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### Claude Desktop (.mcpb)
 
-Download the latest `.mcpb` file from [Releases](https://github.com/nickperrott/plex-claude-plugin/releases) and open it with Claude Desktop.
+Download the latest `.mcpb` file from [Releases](https://github.com/nickperrott/videodrome-plugin/releases) and open it with Claude Desktop.
 
 ### Claude Code (Plugin)
 
 ```bash
-claude plugin install /path/to/plex-plugin
+claude plugin install /path/to/videodrome-plugin
 ```
 
 ### Manual Configuration
@@ -98,7 +98,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "plex": {
       "command": "uv",
-      "args": ["--directory", "/path/to/plex-claude-plugin", "run", "plex-mcp"],
+      "args": ["--directory", "/path/to/videodrome-plugin", "run", "videodrome"],
       "env": {
         "PLEX_URL": "http://192.168.1.100:32400",
         "PLEX_TOKEN": "your-plex-token",
@@ -154,28 +154,28 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 | Command | Description |
 |---------|-------------|
-| `/plex:scan` | Trigger a library scan |
-| `/plex:identify` | Identify a media file |
-| `/plex:rename` | Rename files to Plex format |
-| `/plex:ingest` | Process a folder of media |
-| `/plex:status` | Show server status |
-| `/plex:plan` | Preview a naming plan |
-| `/plex:watch` | Control the file watcher |
-| `/plex:review` | Review pending ingest items |
+| `/videodrome:scan` | Trigger a library scan |
+| `/videodrome:identify` | Identify a media file |
+| `/videodrome:rename` | Rename files to Plex format |
+| `/videodrome:ingest` | Process a folder of media |
+| `/videodrome:status` | Show server status |
+| `/videodrome:plan` | Preview a naming plan |
+| `/videodrome:watch` | Control the file watcher |
+| `/videodrome:review` | Review pending ingest items |
 
 ## Development
 
 ```bash
 # Clone and setup
-git clone https://github.com/nickperrott/plex-claude-plugin.git
-cd plex-claude-plugin
+git clone https://github.com/nickperrott/videodrome-plugin.git
+cd videodrome-plugin
 uv sync --extra dev
 
 # Run tests
 pytest tests/ -v
 
 # Run server locally
-uv run plex-mcp
+uv run videodrome
 ```
 
 ## Plex Naming Conventions

@@ -1,11 +1,11 @@
-# /plex:plan - Generate Ingest Plan
+# /videodrome:plan - Generate Ingest Plan
 
 Creates a detailed ingest plan without executing any operations.
 
 ## Usage
 
 ```
-/plex:plan <source_path> [--threshold=0.85] [--format=table|json]
+/videodrome:plan <source_path> [--threshold=0.85] [--format=table|json]
 ```
 
 ## Arguments
@@ -17,9 +17,9 @@ Creates a detailed ingest plan without executing any operations.
 ## Examples
 
 ```
-/plex:plan /data/downloads/movies
-/plex:plan /data/downloads/season1 --threshold=0.90
-/plex:plan /tmp/new_media --format=json
+/videodrome:plan /data/downloads/movies
+/videodrome:plan /data/downloads/season1 --threshold=0.90
+/videodrome:plan /tmp/new_media --format=json
 ```
 
 ## What it does
@@ -112,7 +112,7 @@ Summary:
 - Needs review: 2 files (8.2 GB)
 - Total: 4 files (28.5 GB)
 
-Recommendation: Run /plex:ingest with --auto flag for high-confidence files
+Recommendation: Run /videodrome:ingest with --auto flag for high-confidence files
 ```
 
 ### JSON Format

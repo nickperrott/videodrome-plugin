@@ -330,7 +330,7 @@ def main():
         print("=" * 70)
         print()
         print("Next steps:")
-        print(f"1. Test the server: uv run --env-file .env plex-mcp")
+        print(f"1. Test the server: uv run --env-file .env videodrome")
         print(f"2. Check the QUICKSTART.md for Claude Desktop setup")
         print(f"3. Use commands like /plex:status to verify connection")
         print()

@@ -1,11 +1,11 @@
-# /plex:status - Server and Library Status
+# /videodrome:status - Server and Library Status
 
 Display current status of Plex server, libraries, and ingest queue.
 
 ## Usage
 
 ```
-/plex:status [--libraries] [--queue] [--history]
+/videodrome:status [--libraries] [--queue] [--history]
 ```
 
 ## Arguments
@@ -17,9 +17,9 @@ Display current status of Plex server, libraries, and ingest queue.
 ## Examples
 
 ```
-/plex:status
-/plex:status --libraries
-/plex:status --queue --history
+/videodrome:status
+/videodrome:status --libraries
+/videodrome:status --queue --history
 ```
 
 ## What it does

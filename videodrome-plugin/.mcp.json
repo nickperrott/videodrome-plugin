@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.mcp.run/config.schema.json",
+  "mcpServers": {
+    "videodrome": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/nick/conductor/workspaces/plex-claude-plugin/missoula-v2",
+        "run",
+        "--env-file",
+        ".env",
+        "videodrome"
+      ],
+      "metadata": {
+        "display_name": "Videodrome",
+        "description": "Manage your video library - download, identify, organize, and ingest media with Plex, TMDb, and Transmission",
+        "version": "0.1.0",
+        "author": "Nick Perrott",
+        "license": "MIT",
+        "documentation_url": "https://github.com/yourusername/videodrome-plugin",
+        "configuration_required": [
+          "VIDEODROME_PLEX_URL",
+          "VIDEODROME_PLEX_TOKEN",
+          "VIDEODROME_TMDB_API_KEY",
+          "VIDEODROME_MEDIA_ROOT"
+        ],
+        "configuration_optional": [
+          "VIDEODROME_INGEST_DIR",
+          "VIDEODROME_AUTO_INGEST",
+          "VIDEODROME_CONFIDENCE_THRESHOLD"
+        ]
+      }
+    }
+  }
+}

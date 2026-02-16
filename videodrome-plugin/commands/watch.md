@@ -1,11 +1,11 @@
-# /plex:watch - Manage File Watcher
+# /videodrome:watch - Manage File Watcher
 
 Control the background file watcher for automatic ingest processing.
 
 ## Usage
 
 ```
-/plex:watch [start|stop|restart|status]
+/videodrome:watch [start|stop|restart|status]
 ```
 
 ## Arguments
@@ -18,10 +18,10 @@ Control the background file watcher for automatic ingest processing.
 ## Examples
 
 ```
-/plex:watch
-/plex:watch start
-/plex:watch stop
-/plex:watch restart
+/videodrome:watch
+/videodrome:watch start
+/videodrome:watch stop
+/videodrome:watch restart
 ```
 
 ## What it does

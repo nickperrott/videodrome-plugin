@@ -1,4 +1,4 @@
-"""Plex MCP Server - Main entry point."""
+"""Videodrome MCP Server - Main entry point."""
 
 import os
 import asyncio
@@ -15,14 +15,15 @@ from server.matcher import MediaMatcher
 from server.files import FileManager
 from server.history import IngestHistory
 from server.watcher import IngestWatcher
-from server.tools import library, system, media, ingest
+from server.transmission import TransmissionClient
+from server.tools import library, system, media, ingest, transmission
 from server.safety import validate_operation, get_safety_metadata, TOOL_SAFETY_MAP
 
 
 def load_config():
-    """Load configuration from ~/.config/plex-mcp/.env or current directory."""
+    """Load configuration from ~/.config/videodrome/.env or current directory."""
     # Try config directory first
-    config_dir = Path.home() / ".config" / "plex-mcp"
+    config_dir = Path.home() / ".config" / "videodrome"
     config_file = config_dir / ".env"
 
     if config_file.exists():
@@ -41,6 +42,28 @@ def load_config():
                     if key and value:
                         os.environ.setdefault(key.strip(), value.strip())
         return env_path
+    return None
+
+
+def get_env_with_fallback(new_key: str, old_key: str, required: bool = True) -> Optional[str]:
+    """Get environment variable with fallback to old name and deprecation warning."""
+    value = os.getenv(new_key)
+    if value:
+        return value
+
+    # Try old name
+    old_value = os.getenv(old_key)
+    if old_value:
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Environment variable '{old_key}' is deprecated. "
+            f"Please update to '{new_key}' in your configuration."
+        )
+        return old_value
+
+    if required:
+        raise ValueError(f"Missing required environment variable: {new_key} (or legacy {old_key})")
+
     return None
 
 
@@ -67,21 +90,22 @@ matcher = None
 file_manager = None
 history = None
 watcher: Optional[IngestWatcher] = None
+transmission_client: Optional[TransmissionClient] = None
 
 
 @asynccontextmanager
 async def lifespan(mcp: FastMCP):
     """Lifespan context manager for startup and shutdown."""
-    global plex_client, tmdb_cache, matcher, file_manager, history, watcher
+    global plex_client, tmdb_cache, matcher, file_manager, history, watcher, transmission_client
 
-    logger.info("Starting Plex MCP Server...")
+    logger.info("Starting Videodrome MCP Server...")
 
-    # Load environment variables
-    plex_url = os.getenv("PLEX_URL")
-    plex_token = os.getenv("PLEX_TOKEN")
-    tmdb_api_key = os.getenv("TMDB_API_KEY")
-    media_root = os.getenv("PLEX_MEDIA_ROOT")
-    ingest_dir = os.getenv("PLEX_INGEST_DIR")
+    # Load environment variables with fallback support
+    plex_url = get_env_with_fallback("VIDEODROME_PLEX_URL", "PLEX_URL")
+    plex_token = get_env_with_fallback("VIDEODROME_PLEX_TOKEN", "PLEX_TOKEN")
+    tmdb_api_key = get_env_with_fallback("VIDEODROME_TMDB_API_KEY", "TMDB_API_KEY")
+    media_root = get_env_with_fallback("VIDEODROME_MEDIA_ROOT", "PLEX_MEDIA_ROOT")
+    ingest_dir = get_env_with_fallback("VIDEODROME_INGEST_DIR", "PLEX_INGEST_DIR", required=False)
 
     # Validate required env vars
     if not all([plex_url, plex_token, tmdb_api_key, media_root]):
@@ -92,10 +116,10 @@ async def lifespan(mcp: FastMCP):
 
     # Initialize Plex client
     logger.info(f"Connecting to Plex server at {plex_url}...")
-    plex_client = create_plex_client()
+    plex_client = create_plex_client(plex_url, plex_token)
 
     # Initialize TMDb cache
-    cache_dir = Path.home() / ".cache" / "plex-mcp"
+    cache_dir = Path.home() / ".cache" / "videodrome"
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_db_path = cache_dir / "tmdb_cache.db"
 
@@ -125,10 +149,29 @@ async def lifespan(mcp: FastMCP):
         history = IngestHistory(db_path=history_db_path)
         await history.initialize()
 
+        # Initialize Transmission client (optional)
+        transmission_url = get_env_with_fallback("TRANSMISSION_URL", "TRANSMISSION_URL", required=False)
+        if transmission_url:
+            logger.info("Initializing Transmission client...")
+            transmission_client = TransmissionClient(
+                url=transmission_url,
+                username=os.getenv("TRANSMISSION_USER"),
+                password=os.getenv("TRANSMISSION_PASSWORD")
+            )
+
+            # Attempt to connect
+            if transmission_client.connect():
+                logger.info("Transmission client connected successfully")
+            else:
+                logger.warning("Failed to connect to Transmission. Torrent features will be unavailable.")
+                transmission_client = None
+        else:
+            logger.info("TRANSMISSION_URL not set - torrent functionality disabled")
+
         # Initialize IngestWatcher
-        auto_ingest = os.getenv("PLEX_AUTO_INGEST", "false").lower() == "true"
-        confidence_threshold = float(os.getenv("PLEX_CONFIDENCE_THRESHOLD", "0.85"))
-        watcher_auto_start = os.getenv("PLEX_WATCHER_AUTO_START", "false").lower() == "true"
+        auto_ingest = (get_env_with_fallback("VIDEODROME_AUTO_INGEST", "PLEX_AUTO_INGEST", required=False) or "false").lower() == "true"
+        confidence_threshold = float(get_env_with_fallback("VIDEODROME_CONFIDENCE_THRESHOLD", "PLEX_CONFIDENCE_THRESHOLD", required=False) or "0.85")
+        watcher_auto_start = (get_env_with_fallback("VIDEODROME_WATCHER_AUTO_START", "PLEX_WATCHER_AUTO_START", required=False) or "false").lower() == "true"
 
         logger.info("Initializing IngestWatcher...")
         watcher = IngestWatcher(
@@ -137,7 +180,8 @@ async def lifespan(mcp: FastMCP):
             file_manager=file_manager,
             history=history,
             auto_ingest=auto_ingest,
-            confidence_threshold=confidence_threshold
+            confidence_threshold=confidence_threshold,
+            transmission_client=transmission_client
         )
 
         # Auto-start watcher if configured
@@ -147,13 +191,13 @@ async def lifespan(mcp: FastMCP):
     else:
         logger.info("PLEX_INGEST_DIR not set - watcher functionality disabled")
 
-    logger.info("Plex MCP Server started successfully!")
+    logger.info("Videodrome MCP Server started successfully!")
 
     # Yield control to FastMCP
     yield
 
     # Shutdown
-    logger.info("Shutting down Plex MCP Server...")
+    logger.info("Shutting down Videodrome MCP Server...")
 
     # Stop watcher
     if watcher and watcher.is_running:
@@ -167,12 +211,12 @@ async def lifespan(mcp: FastMCP):
     if tmdb_cache:
         await tmdb_cache.close()
 
-    logger.info("Plex MCP Server shutdown complete.")
+    logger.info("Videodrome MCP Server shutdown complete.")
 
 
 # Create FastMCP instance
 mcp = FastMCP(
-    "Plex MCP Server",
+    "Videodrome",
     lifespan=lifespan
 )
 
@@ -420,6 +464,96 @@ async def reject_pending(source: str) -> dict:
     return await watcher.reject_pending(source)
 
 
+# =============================================================================
+# Transmission Tools (only if transmission_client is initialized)
+# =============================================================================
+
+@mcp.tool()
+async def add_torrent(magnet_or_url: str, download_dir: Optional[str] = None) -> dict:
+    """Add a torrent via magnet link or .torrent URL.
+
+    Validation:
+    - Accept only magnet URIs and explicit .torrent URLs
+    - If download_dir is set, it must be under PLEX_INGEST_DIR
+
+    Args:
+        magnet_or_url: Magnet URI or .torrent file URL
+        download_dir: Optional download directory (must be under PLEX_INGEST_DIR)
+    """
+    if not transmission_client:
+        return {"error": "Transmission not configured (TRANSMISSION_URL not set)"}
+    return await transmission.add_torrent(transmission_client, magnet_or_url, download_dir)
+
+
+@mcp.tool()
+async def list_torrents(status: Optional[str] = None) -> list[dict]:
+    """List torrents with optional status filter (downloading/seeding/stopped/all).
+
+    Args:
+        status: Filter by status (downloading/seeding/stopped/all)
+    """
+    if not transmission_client:
+        return [{"error": "Transmission not configured"}]
+    return await transmission.list_torrents(transmission_client, status)
+
+
+@mcp.tool()
+async def get_torrent_status(torrent_id: int) -> dict:
+    """Get detailed status of a specific torrent.
+
+    Args:
+        torrent_id: Torrent ID
+    """
+    if not transmission_client:
+        return {"error": "Transmission not configured"}
+    return await transmission.get_torrent_status(transmission_client, torrent_id)
+
+
+@mcp.tool()
+async def pause_torrent(torrent_id: int) -> dict:
+    """Pause a torrent download.
+
+    Args:
+        torrent_id: Torrent ID
+    """
+    if not transmission_client:
+        return {"error": "Transmission not configured"}
+    return await transmission.pause_torrent(transmission_client, torrent_id)
+
+
+@mcp.tool()
+async def resume_torrent(torrent_id: int) -> dict:
+    """Resume a paused torrent.
+
+    Args:
+        torrent_id: Torrent ID
+    """
+    if not transmission_client:
+        return {"error": "Transmission not configured"}
+    return await transmission.resume_torrent(transmission_client, torrent_id)
+
+
+@mcp.tool()
+async def remove_torrent(torrent_id: int, delete_data: bool = False) -> dict:
+    """Remove a torrent and optionally delete downloaded data.
+
+    Args:
+        torrent_id: Torrent ID
+        delete_data: Also delete downloaded data (default: False)
+    """
+    if not transmission_client:
+        return {"error": "Transmission not configured"}
+    return await transmission.remove_torrent(transmission_client, torrent_id, delete_data)
+
+
+@mcp.tool()
+async def get_transmission_stats() -> dict:
+    """Get Transmission daemon statistics."""
+    if not transmission_client:
+        return {"error": "Transmission not configured"}
+    return await transmission.get_transmission_stats(transmission_client)
+
+
 def validate_tool_safety(tool_name: str) -> None:
     """
     Validate that a tool operation is allowed to execute.
@@ -454,7 +588,7 @@ def add_safety_metadata(result: dict, tool_name: str) -> dict:
 
 def main():
     """Main entry point."""
-    logger.info("Plex MCP Server starting...")
+    logger.info("Videodrome MCP Server starting...")
     logger.info(f"Safety validation enabled for all {len(TOOL_SAFETY_MAP)} tools")
     mcp.run()
 

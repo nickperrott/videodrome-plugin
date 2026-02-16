@@ -192,7 +192,7 @@ Summary:
 - Ready for ingest: 3 files (20.3 GB)
 - Needs review: 2 files (8.2 GB)
 
-Use /plex:plan to see detailed ingest plan.
+Use /videodrome:plan to see detailed ingest plan.
 ```
 
 ## Error Handling
