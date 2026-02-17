@@ -153,7 +153,7 @@ class PlexAPIClient:
         """Trigger a library scan for the specified section."""
 
         def _sync_scan_library() -> Dict[str, str]:
-            section = self.server.library.section(section_id)
+            section = self.server.library.sectionByID(int(section_id))
             section.update()
             return {
                 "status": "success",
@@ -168,7 +168,7 @@ class PlexAPIClient:
         """Search for items in a library section."""
 
         def _sync_search_library() -> List[Dict[str, Any]]:
-            section = self.server.library.section(section_id)
+            section = self.server.library.sectionByID(int(section_id))
             results = section.search(query)
             return [
                 {
@@ -187,7 +187,7 @@ class PlexAPIClient:
         """List recently added items in a library section."""
 
         def _sync_list_recent() -> List[Dict[str, Any]]:
-            section = self.server.library.section(section_id)
+            section = self.server.library.sectionByID(int(section_id))
             results = section.recentlyAdded(maxresults=limit)
             return [
                 {
@@ -218,7 +218,7 @@ class PlexAPIClient:
         """Get all TV shows with season details from a library section."""
 
         def _sync_inventory() -> List[Dict[str, Any]]:
-            section = self.server.library.section(section_id)
+            section = self.server.library.sectionByID(int(section_id))
             results = []
             for show in section.all():
                 seasons = show.seasons()

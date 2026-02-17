@@ -299,7 +299,7 @@ async def parse_filename(filename: str) -> dict:
     Args:
         filename: Filename to parse
     """
-    return await media.parse_filename(matcher, filename)
+    return await media.parse_filename(filename)
 
 
 @mcp.tool()
@@ -311,7 +311,7 @@ async def search_tmdb(title: str, year: Optional[int] = None, media_type: str = 
         year: Release year (optional)
         media_type: Type of media - "movie" or "tv" (default: "movie")
     """
-    return await media.search_tmdb(matcher, title, year, media_type)
+    return await media.search_tmdb(title, year, media_type)
 
 
 @mcp.tool()
@@ -321,7 +321,7 @@ async def preview_rename(filename: str) -> dict:
     Args:
         filename: Filename to preview
     """
-    return await media.preview_rename(matcher, filename)
+    return await media.preview_rename(filename)
 
 
 @mcp.tool()
@@ -331,7 +331,7 @@ async def batch_identify(directory: str) -> list[dict]:
     Args:
         directory: Directory path to scan
     """
-    return await media.batch_identify(matcher, directory)
+    return await media.batch_identify(directory)
 
 
 # =============================================================================

@@ -23,16 +23,17 @@ class TorrentSearchClient:
     def __init__(self, providers: List[str] = None):
         self.providers = providers or ["thepiratebay"]
         self._provider_aliases = {
-            "thepiratebay": {"thepiratebay", "tpb"},
-            "nyaa": {"nyaa"},
-            "ygg": {"ygg", "yggtorrent"},
+            "thepiratebay": {"thepiratebay", "tpb", "thepiratebay.org"},
+            "nyaa": {"nyaa", "nyaa.si"},
+            "ygg": {"ygg", "yggtorrent", "www.yggtorrent.ms"},
         }
         self._is_available = False
+        self._api = None
 
     def connect(self) -> bool:
         """Verify torrent-search-mcp is importable."""
         try:
-            from torrent_search import TorrentSearch  # noqa: F401
+            from torrent_search.wrapper import TorrentSearchApi  # noqa: F401
             self._is_available = True
             logger.info("TorrentSearchClient ready (providers: %s)", self.providers)
             return True
@@ -42,6 +43,12 @@ class TorrentSearchClient:
                 "Install with: pip install torrent-search-mcp"
             )
             return False
+
+    def _get_api(self):
+        if self._api is None:
+            from torrent_search.wrapper import TorrentSearchApi
+            self._api = TorrentSearchApi()
+        return self._api
 
     @property
     def is_available(self) -> bool:
@@ -54,21 +61,8 @@ class TorrentSearchClient:
         Returns list of normalised result dicts with keys:
             id, title, source, size, seeders, leechers, date, magnet
         """
-        from torrent_search import TorrentSearch
-
-        ts = TorrentSearch()
-        loop = asyncio.get_event_loop()
-
-        def _do_search():
-            # Some versions support provider selection directly; older versions don't.
-            try:
-                return ts.search(query, limit=limit, providers=self.providers)
-            except TypeError:
-                return ts.search(query, limit=limit)
-
-        results = await loop.run_in_executor(
-            None, _do_search
-        )
+        api = self._get_api()
+        results = await api.search_torrents(query, max_items=limit)
         normalised = [self._normalise(r) for r in (results or [])]
 
         if self.providers:
@@ -86,26 +80,31 @@ class TorrentSearchClient:
         Returns:
             Magnet URI string, or None if unavailable.
         """
-        from torrent_search import TorrentSearch
-
-        ts = TorrentSearch()
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None, lambda: ts.get_torrent(torrent_id)
-        )
-        return result.get("magnet") if result else None
+        api = self._get_api()
+        result = await api.get_torrent(torrent_id)
+        # Returns a magnet URI string or torrent file path
+        if result and result.startswith("magnet:"):
+            return result
+        return result  # may be a .torrent file path
 
     @staticmethod
-    def _normalise(raw: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalise(raw) -> Dict[str, Any]:
+        # raw is a Torrent pydantic model (torrent_search.wrapper.models.Torrent)
+        if hasattr(raw, "model_dump"):
+            data = raw.model_dump()
+        elif isinstance(raw, dict):
+            data = raw
+        else:
+            data = vars(raw)
         return {
-            "id": raw.get("id", ""),
-            "title": raw.get("title", ""),
-            "source": raw.get("source", ""),
-            "size": raw.get("size", ""),
-            "seeders": int(raw.get("seeders") or 0),
-            "leechers": int(raw.get("leechers") or 0),
-            "date": raw.get("date", ""),
-            "magnet": raw.get("magnet"),  # may be None — resolve with get_magnet()
+            "id": data.get("id", ""),
+            "title": data.get("filename", data.get("title", "")),
+            "source": data.get("source", ""),
+            "size": data.get("size", ""),
+            "seeders": int(data.get("seeders") or 0),
+            "leechers": int(data.get("leechers") or 0),
+            "date": data.get("date", ""),
+            "magnet": data.get("magnet_link", data.get("magnet")),
         }
 
     def _is_provider_allowed(self, source: str) -> bool:

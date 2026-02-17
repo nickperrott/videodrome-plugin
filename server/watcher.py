@@ -161,8 +161,8 @@ class IngestWatcher:
         # Start stability check background task
         self._stability_task = asyncio.create_task(self._stability_check_loop())
 
-        # Start Transmission polling task if client is available
-        if self.transmission_client and self.transmission_client.is_connected:
+        # Start Transmission polling task if client is configured (retries internally if not yet connected)
+        if self.transmission_client:
             self._transmission_task = asyncio.create_task(self._transmission_poll_loop())
             logger.info(f"Transmission polling enabled (interval: {self.transmission_poll_interval}s)")
 
@@ -216,7 +216,8 @@ class IngestWatcher:
             "confidence_threshold": self.confidence_threshold,
             "stability_seconds": self.stability_seconds,
             "pending_queue_size": len(self._pending_queue),
-            "processing_count": len(self._processing)
+            "processing_count": len(self._processing),
+            "transmission_polling_active": self._transmission_task is not None and not self._transmission_task.done(),
         }
 
     async def configure(
@@ -495,9 +496,14 @@ class IngestWatcher:
             try:
                 await asyncio.sleep(self.transmission_poll_interval)
 
-                if not self.transmission_client or not self.transmission_client.is_connected:
-                    logger.warning("Transmission client not connected, skipping poll")
+                if not self.transmission_client:
                     continue
+                if not self.transmission_client.is_connected:
+                    logger.info("Transmission not connected, attempting reconnect...")
+                    self.transmission_client.connect()
+                    if not self.transmission_client.is_connected:
+                        logger.warning("Transmission reconnect failed, skipping poll")
+                        continue
 
                 # Get completed torrents
                 try:
