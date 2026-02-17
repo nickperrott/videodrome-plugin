@@ -4,9 +4,9 @@
     "args": [
       "run",
       "--directory",
-      "${CLAUDE_PLUGIN_ROOT}/..",
+      "/Users/nick/git/videodrome-plugin",
       "--env-file",
-      "${CLAUDE_PLUGIN_ROOT}/../.env",
+      "/Users/nick/.config/videodrome-mcp/.env",
       "videodrome"
     ],
     "env": {
