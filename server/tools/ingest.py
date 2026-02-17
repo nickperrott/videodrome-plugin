@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List, Union
 from server.files import FileManager, FileOperationError, InvalidExtensionError, PathRestrictionError
 from server.history import IngestHistory, IngestStatus, IngestRecord
+from server.tools import nas as nas_tools
 
 
 class IngestTools:
@@ -49,6 +50,14 @@ class IngestTools:
         """Close history database connection."""
         await self.history.close()
 
+    async def _ensure_auto_mount(self, path: Union[str, Path]) -> None:
+        """Attempt NAS auto-mount when enabled and path is on the configured volume."""
+        mount_result = await nas_tools.ensure_media_volume_for_path(path)
+        if mount_result.get("attempted") and not mount_result.get("success", False):
+            raise FileOperationError(
+                f"Auto-mount failed for {path}: {mount_result.get('error', 'unknown error')}"
+            )
+
     async def list_ingest_files(
         self,
         recursive: bool = False
@@ -62,6 +71,7 @@ class IngestTools:
             Dictionary with success status and list of file paths
         """
         try:
+            await self._ensure_auto_mount(self.file_manager.ingest_dir)
             files = self.file_manager.list_files(
                 self.file_manager.ingest_dir,
                 recursive=recursive
@@ -117,6 +127,9 @@ class IngestTools:
         )
 
         try:
+            await self._ensure_auto_mount(source)
+            await self._ensure_auto_mount(dest)
+
             # Perform file operation
             if operation == "copy":
                 result_path = self.file_manager.copy_file(source, dest)

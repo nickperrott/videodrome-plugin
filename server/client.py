@@ -88,6 +88,34 @@ class PlexClient(Protocol):
         """
         ...
 
+    async def get_library_inventory(self, section_id: str) -> List[Dict[str, Any]]:
+        """Get all TV shows in a section with their season numbers.
+
+        Args:
+            section_id: The library section ID (must be a 'show' type section)
+
+        Returns:
+            List of show dictionaries, each containing:
+            - title: Show title
+            - year: Premiere year
+            - rating_key: Plex rating key (unique ID)
+            - seasons: Sorted list of season numbers present (0 = Specials excluded)
+            - episode_count: Total episode count across all seasons
+        """
+        ...
+
+    async def get_show_details(self, rating_key: str) -> Dict[str, Any]:
+        """Get detailed season and episode information for a specific show.
+
+        Args:
+            rating_key: Plex rating key for the show
+
+        Returns:
+            Dictionary with title, year, rating_key, seasons list,
+            episode_counts per season dict, and total episode_count.
+        """
+        ...
+
 
 class PlexAPIClient:
     """Concrete implementation of PlexClient using plexapi.
@@ -185,6 +213,56 @@ class PlexAPIClient:
             }
 
         return await asyncio.to_thread(_sync_get_server_info)
+
+    async def get_library_inventory(self, section_id: str) -> List[Dict[str, Any]]:
+        """Get all TV shows with season details from a library section."""
+
+        def _sync_inventory() -> List[Dict[str, Any]]:
+            section = self.server.library.section(section_id)
+            results = []
+            for show in section.all():
+                seasons = show.seasons()
+                season_numbers = sorted(
+                    s.seasonNumber for s in seasons if s.seasonNumber > 0
+                )
+                episode_count = sum(
+                    len(s.episodes()) for s in seasons if s.seasonNumber > 0
+                )
+                results.append({
+                    "title": show.title,
+                    "year": getattr(show, "year", None),
+                    "rating_key": str(show.ratingKey),
+                    "seasons": season_numbers,
+                    "episode_count": episode_count,
+                })
+            return results
+
+        return await asyncio.to_thread(_sync_inventory)
+
+    async def get_show_details(self, rating_key: str) -> Dict[str, Any]:
+        """Get detailed season/episode information for a specific show."""
+
+        def _sync_show_details() -> Dict[str, Any]:
+            show = self.server.fetchItem(int(rating_key))
+            seasons = show.seasons()
+            season_numbers = sorted(
+                s.seasonNumber for s in seasons if s.seasonNumber > 0
+            )
+            episode_counts = {
+                s.seasonNumber: len(s.episodes())
+                for s in seasons
+                if s.seasonNumber > 0
+            }
+            return {
+                "title": show.title,
+                "year": getattr(show, "year", None),
+                "rating_key": str(show.ratingKey),
+                "seasons": season_numbers,
+                "episode_counts": episode_counts,
+                "episode_count": sum(episode_counts.values()),
+            }
+
+        return await asyncio.to_thread(_sync_show_details)
 
 
 def create_plex_client(plex_url: str = None, plex_token: str = None) -> PlexAPIClient:

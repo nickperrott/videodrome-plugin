@@ -16,7 +16,11 @@ from server.files import FileManager
 from server.history import IngestHistory
 from server.watcher import IngestWatcher
 from server.transmission import TransmissionClient
+from server.torrent_search import TorrentSearchClient
 from server.tools import library, system, media, ingest, transmission
+from server.tools import torrent_search as torrent_search_tools
+from server.tools import nas as nas_tools
+from server.tools import discovery as discovery_tools
 from server.safety import validate_operation, get_safety_metadata, TOOL_SAFETY_MAP
 
 
@@ -91,12 +95,13 @@ file_manager = None
 history = None
 watcher: Optional[IngestWatcher] = None
 transmission_client: Optional[TransmissionClient] = None
+torrent_search_client: Optional[TorrentSearchClient] = None
 
 
 @asynccontextmanager
 async def lifespan(mcp: FastMCP):
     """Lifespan context manager for startup and shutdown."""
-    global plex_client, tmdb_cache, matcher, file_manager, history, watcher, transmission_client
+    global plex_client, tmdb_cache, matcher, file_manager, history, watcher, transmission_client, torrent_search_client
 
     logger.info("Starting Videodrome MCP Server...")
 
@@ -190,6 +195,16 @@ async def lifespan(mcp: FastMCP):
             await watcher.start()
     else:
         logger.info("PLEX_INGEST_DIR not set - watcher functionality disabled")
+
+    # Initialize TorrentSearchClient (gracefully no-ops if library not installed)
+    providers_env = os.getenv("TORRENT_SEARCH_PROVIDERS", "thepiratebay")
+    providers = [p.strip() for p in providers_env.split(",") if p.strip()]
+    logger.info("Initializing TorrentSearchClient (providers: %s)...", providers)
+    torrent_search_client = TorrentSearchClient(providers=providers)
+    if torrent_search_client.connect():
+        logger.info("Torrent search ready.")
+    else:
+        logger.info("Torrent search unavailable — install torrent-search-mcp to enable.")
 
     logger.info("Videodrome MCP Server started successfully!")
 
@@ -552,6 +567,213 @@ async def get_transmission_stats() -> dict:
     if not transmission_client:
         return {"error": "Transmission not configured"}
     return await transmission.get_transmission_stats(transmission_client)
+
+
+# =============================================================================
+# Library Season / Inventory Tools
+# =============================================================================
+
+@mcp.tool()
+async def get_library_inventory(section_id: str) -> list[dict]:
+    """Get all TV shows in a library section with their season numbers.
+
+    Use this to see which seasons are already in Plex before comparing against
+    TMDb to find missing content.
+
+    Args:
+        section_id: Library section ID (must be a TV show section)
+    """
+    return await library.get_library_inventory(plex_client, section_id)
+
+
+@mcp.tool()
+async def get_show_details(rating_key: str) -> dict:
+    """Get detailed season and episode information for a specific TV show.
+
+    Args:
+        rating_key: Plex rating key for the show
+    """
+    return await library.get_show_details(plex_client, rating_key)
+
+
+# =============================================================================
+# Torrent Search Tools
+# =============================================================================
+
+@mcp.tool()
+async def search_torrents(
+    query: str,
+    limit: int = 10,
+    language: Optional[str] = None,
+) -> dict:
+    """Search for torrents by title or keyword across configured providers.
+
+    When a language is specified, language-tagged query variants are generated
+    and matching results are ranked higher.
+
+    Args:
+        query: Search query string (e.g. "Breaking Bad Season 5 1080p")
+        limit: Maximum number of results (default 10)
+        language: Optional language preference (e.g. "de", "german", "fr", "japanese").
+                  Supported: German (de), French (fr), Spanish (es), Italian (it), Japanese (ja).
+    """
+    return await torrent_search_tools.search_torrents(torrent_search_client, query, limit, language)
+
+
+@mcp.tool()
+async def get_torrent_magnet(torrent_id: str) -> dict:
+    """Get the magnet link for a torrent result ID returned by search_torrents.
+
+    Args:
+        torrent_id: ID string from a search_torrents result
+    """
+    return await torrent_search_tools.get_torrent_magnet(torrent_search_client, torrent_id)
+
+
+@mcp.tool()
+async def search_season(
+    show_title: str,
+    season: int,
+    quality: str = "1080p",
+    language: Optional[str] = None,
+) -> dict:
+    """Search for a complete season pack for a TV show.
+
+    Runs optimised queries and returns ranked results preferring season packs
+    over individual episodes. When a language is specified, language-specific
+    query variants are included (e.g. German: adds "Deutsch", "GERMAN", "Staffel N").
+
+    Args:
+        show_title: TV show name (e.g. "Dark")
+        season: Season number
+        quality: Preferred quality string (default "1080p")
+        language: Optional language code or name (e.g. "de", "german", "fr").
+                  Supported: de/german, fr/french, es/spanish, it/italian, ja/japanese.
+    """
+    return await torrent_search_tools.search_season(
+        torrent_search_client, show_title, season, quality, language=language
+    )
+
+
+# =============================================================================
+# NAS Volume Mount Tools
+# =============================================================================
+
+@mcp.tool()
+async def check_media_volume() -> dict:
+    """Check if the NAS MEDIA volume is currently mounted and accessible.
+
+    Uses VIDEODROME_NAS_IP, VIDEODROME_NAS_SHARE, and VIDEODROME_NAS_MOUNT_POINT
+    from configuration.
+    """
+    return await nas_tools.check_media_volume()
+
+
+@mcp.tool()
+async def mount_media_volume(force_remount: bool = False) -> dict:
+    """Mount the NAS MEDIA SMB share.
+
+    On macOS uses 'open smb://…' (current user credentials).
+    On Linux uses 'mount -t cifs'.
+
+    Args:
+        force_remount: Unmount and remount even if already mounted (macOS only)
+    """
+    return await nas_tools.mount_media_volume(force_remount)
+
+
+# =============================================================================
+# Discovery / Agentic Workflow Tools
+# =============================================================================
+
+@mcp.tool()
+async def find_new_seasons(
+    section_id: Optional[str] = None,
+    show_filter: Optional[str] = None,
+    auto_search_torrents: bool = False,
+    quality: str = "1080p",
+) -> dict:
+    """Find TV shows in Plex that have new seasons available on TMDb.
+
+    Compares the seasons currently in your Plex library against TMDb to
+    identify which shows have seasons you don't yet have.
+
+    Args:
+        section_id: Plex TV library section ID (auto-detects if not provided)
+        show_filter: Optional title substring to limit which shows are checked
+        auto_search_torrents: If True, automatically search for torrents for each missing season
+        quality: Quality string for torrent searches (default "1080p")
+    """
+    return await discovery_tools.find_new_seasons(
+        plex_client=plex_client,
+        matcher=matcher,
+        section_id=section_id,
+        show_filter=show_filter,
+        auto_search_torrents=auto_search_torrents,
+        torrent_client=torrent_search_client,
+        quality=quality,
+    )
+
+
+@mcp.tool()
+async def discover_top_rated_content(
+    content_type: str = "both",
+    min_rating: float = 7.5,
+    genres: Optional[list] = None,
+    year_from: Optional[int] = None,
+    year_to: Optional[int] = None,
+    exclude_in_library: bool = True,
+    max_results: int = 20,
+    auto_queue: bool = False,
+    quality: str = "1080p",
+    include_newspaper_reviews: bool = True,
+) -> dict:
+    """Discover highly-rated movies and TV shows not yet in your Plex library.
+
+    Uses TMDb trending and top-rated lists as the primary source.
+    Optionally enriches ratings with:
+        - IMDb and Rotten Tomatoes (when OMDB_API_KEY is configured)
+        - The Guardian film reviews (scraped; falls back to archive.ph)
+        - The Daily Telegraph reviews (scraped; falls back to archive.ph)
+
+    Args:
+        content_type: "movie", "tv", or "both" (default "both")
+        min_rating: Minimum composite rating out of 10 (default 7.5)
+        genres: Optional list of genre names to filter by (e.g. ["Drama", "Sci-Fi"])
+        year_from: Optional start year filter (e.g. 2020)
+        year_to: Optional end year filter (e.g. 2026)
+        exclude_in_library: Skip content already in Plex (default True)
+        max_results: Maximum number of recommendations (default 20)
+        auto_queue: Search for torrents for the top 5 results (default False)
+        quality: Quality string for torrent searches (default "1080p")
+        include_newspaper_reviews: Fetch Guardian and Telegraph reviews for the shortlist (default True)
+    """
+    if (
+        year_from is not None
+        and year_to is not None
+        and year_from > year_to
+    ):
+        return {"error": "Invalid year range: year_from must be less than or equal to year_to"}
+
+    year_range = (
+        (year_from, year_to)
+        if year_from is not None or year_to is not None
+        else None
+    )
+    return await discovery_tools.discover_top_rated_content(
+        plex_client=plex_client,
+        matcher=matcher,
+        content_type=content_type,
+        min_rating=min_rating,
+        genres=genres,
+        year_range=year_range,
+        exclude_in_library=exclude_in_library,
+        max_results=max_results,
+        auto_queue=auto_queue,
+        torrent_client=torrent_search_client,
+        quality=quality,
+        include_newspaper_reviews=include_newspaper_reviews,
+    )
 
 
 def validate_tool_safety(tool_name: str) -> None:

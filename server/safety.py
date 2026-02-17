@@ -70,6 +70,23 @@ TOOL_SAFETY_MAP: dict[str, SafetyTier] = {
     "plex_restart_watcher": SafetyTier.WRITE,
     "plex_configure_watcher": SafetyTier.WRITE,
 
+    # Plex library — season/inventory tools
+    "get_library_inventory": SafetyTier.READ,
+    "get_show_details": SafetyTier.READ,
+
+    # Torrent search tools (all read-only — no side effects)
+    "search_torrents": SafetyTier.READ,
+    "get_torrent_magnet": SafetyTier.READ,
+    "search_season": SafetyTier.READ,
+
+    # NAS volume management
+    "check_media_volume": SafetyTier.READ,
+    "mount_media_volume": SafetyTier.WRITE,  # triggers OS-level mount
+
+    # Discovery / agentic workflows
+    "find_new_seasons": SafetyTier.READ,
+    "discover_top_rated_content": SafetyTier.READ,
+
     # BLOCKED TOOLS (always denied)
     "plex_delete_file": SafetyTier.BLOCKED,
     "plex_delete_directory": SafetyTier.BLOCKED,

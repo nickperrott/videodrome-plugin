@@ -9,6 +9,8 @@ from server.tools.library import (
     scan_library,
     search_library,
     list_recent,
+    get_library_inventory,
+    get_show_details,
 )
 
 
@@ -241,3 +243,87 @@ async def test_list_recent_empty_library(mock_async_plex_client):
 
     assert isinstance(result, list)
     assert len(result) == 0
+
+
+# =============================================================================
+# get_library_inventory Tool Tests
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_get_library_inventory_success(mock_async_plex_client):
+    """get_library_inventory should return shows with season lists."""
+    mock_async_plex_client.get_library_inventory = AsyncMock(return_value=[
+        {
+            "title": "Breaking Bad",
+            "year": 2008,
+            "rating_key": "101",
+            "seasons": [1, 2, 3, 4, 5],
+            "episode_count": 62,
+        },
+        {
+            "title": "Severance",
+            "year": 2022,
+            "rating_key": "202",
+            "seasons": [1],
+            "episode_count": 9,
+        },
+    ])
+
+    result = await get_library_inventory(mock_async_plex_client, "2")
+
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert result[0]["title"] == "Breaking Bad"
+    assert result[0]["seasons"] == [1, 2, 3, 4, 5]
+    assert result[0]["episode_count"] == 62
+    mock_async_plex_client.get_library_inventory.assert_called_once_with("2")
+
+
+@pytest.mark.asyncio
+async def test_get_library_inventory_empty_section(mock_async_plex_client):
+    """get_library_inventory should return empty list for an empty section."""
+    mock_async_plex_client.get_library_inventory = AsyncMock(return_value=[])
+
+    result = await get_library_inventory(mock_async_plex_client, "2")
+
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_get_library_inventory_invalid_section(mock_async_plex_client):
+    """get_library_inventory should propagate NotFound for invalid sections."""
+    from plexapi.exceptions import NotFound
+
+    mock_async_plex_client.get_library_inventory = AsyncMock(
+        side_effect=NotFound("Section not found")
+    )
+
+    with pytest.raises(NotFound):
+        await get_library_inventory(mock_async_plex_client, "999")
+
+
+# =============================================================================
+# get_show_details Tool Tests
+# =============================================================================
+
+
+@pytest.mark.asyncio
+async def test_get_show_details_success(mock_async_plex_client):
+    """get_show_details should return season and episode detail."""
+    mock_async_plex_client.get_show_details = AsyncMock(return_value={
+        "title": "The Wire",
+        "year": 2002,
+        "rating_key": "333",
+        "seasons": [1, 2, 3, 4, 5],
+        "episode_counts": {1: 13, 2: 12, 3: 12, 4: 13, 5: 10},
+        "episode_count": 60,
+    })
+
+    result = await get_show_details(mock_async_plex_client, "333")
+
+    assert result["title"] == "The Wire"
+    assert result["seasons"] == [1, 2, 3, 4, 5]
+    assert result["episode_counts"][1] == 13
+    assert result["episode_count"] == 60
+    mock_async_plex_client.get_show_details.assert_called_once_with("333")

@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from server.client import PlexClient
 
 
+
 async def list_libraries(client: PlexClient) -> List[Dict[str, Any]]:
     """List all library sections on the Plex server.
 
@@ -95,3 +96,57 @@ async def list_recent(
         10
     """
     return await client.list_recent(section_id, limit)
+
+
+async def get_library_inventory(
+    client: PlexClient, section_id: str
+) -> List[Dict[str, Any]]:
+    """Get all TV shows in a section with their season numbers.
+
+    Use this to understand which seasons are already in Plex before
+    comparing against TMDb to find missing seasons.
+
+    Args:
+        client: PlexClient instance
+        section_id: The library section ID (should be a 'show' type section)
+
+    Returns:
+        List of show dictionaries, each containing:
+        - title: Show title
+        - year: Premiere year
+        - rating_key: Plex rating key
+        - seasons: Sorted list of season numbers present (Specials/Season 0 excluded)
+        - episode_count: Total episode count across all seasons
+
+    Example:
+        >>> inventory = await get_library_inventory(client, "2")
+        >>> print(inventory[0]["seasons"])
+        [1, 2, 3]
+    """
+    return await client.get_library_inventory(section_id)
+
+
+async def get_show_details(
+    client: PlexClient, rating_key: str
+) -> Dict[str, Any]:
+    """Get detailed season and episode information for a specific TV show.
+
+    Args:
+        client: PlexClient instance
+        rating_key: Plex rating key for the show (from search_library or get_library_inventory)
+
+    Returns:
+        Dictionary with:
+        - title: Show title
+        - year: Premiere year
+        - rating_key: Plex rating key
+        - seasons: Sorted list of season numbers
+        - episode_counts: Dict mapping season number to episode count
+        - episode_count: Total episode count
+
+    Example:
+        >>> details = await get_show_details(client, "12345")
+        >>> print(details["episode_counts"])
+        {1: 10, 2: 12, 3: 8}
+    """
+    return await client.get_show_details(rating_key)

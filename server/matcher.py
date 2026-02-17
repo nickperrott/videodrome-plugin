@@ -2,6 +2,7 @@
 
 import re
 import asyncio
+import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from difflib import SequenceMatcher
@@ -10,6 +11,8 @@ import guessit
 import tmdbsimple as tmdb
 
 from server.tmdb_cache import TMDbCache
+
+logger = logging.getLogger(__name__)
 
 
 class MediaMatcher:
@@ -51,7 +54,8 @@ class MediaMatcher:
         self,
         title: str,
         year: Optional[int] = None,
-        media_type: str = "movie"
+        media_type: str = "movie",
+        max_retries: int = 3,
     ) -> List[Dict[str, Any]]:
         """Search TMDb for media.
 
@@ -59,9 +63,13 @@ class MediaMatcher:
             title: Media title
             year: Release year (optional)
             media_type: "movie" or "tv"
+            max_retries: Number of retry attempts on transient errors (default 3)
 
         Returns:
-            List of TMDb results
+            List of TMDb results.
+
+        Raises:
+            RuntimeError: If TMDb search fails after retries.
         """
         # Check cache first
         if self.cache:
@@ -69,21 +77,45 @@ class MediaMatcher:
             if cached:
                 return cached if isinstance(cached, list) else [cached]
 
-        # Search TMDb
         loop = asyncio.get_event_loop()
         search = tmdb.Search()
 
-        def do_search():
-            if media_type == "tv":
-                return search.tv(query=title, year=year)
-            else:
-                return search.movie(query=title, year=year)
+        # Strip None year to avoid passing year=None to the API which some
+        # versions of tmdbsimple serialise as the string "None".
+        safe_year = year if year else None
 
-        result = await loop.run_in_executor(None, do_search)
+        def do_search() -> Dict[str, Any]:
+            if media_type == "tv":
+                return search.tv(query=title, first_air_date_year=safe_year)
+            else:
+                return search.movie(query=title, year=safe_year)
+
+        last_error: Optional[Exception] = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                result = await loop.run_in_executor(None, do_search)
+                break
+            except Exception as exc:
+                last_error = exc
+                if attempt < max_retries:
+                    wait = 2 ** attempt  # exponential back-off: 2s, 4s
+                    logger.warning(
+                        "TMDb search attempt %d/%d failed for %r (%s): %s — retrying in %ds",
+                        attempt, max_retries, title, media_type, exc, wait,
+                    )
+                    await asyncio.sleep(wait)
+        else:
+            logger.error(
+                "TMDb search failed after %d attempts for %r (%s): %s",
+                max_retries, title, media_type, last_error,
+            )
+            raise RuntimeError(
+                f"TMDb search failed after {max_retries} attempts for {title!r} ({media_type})"
+            ) from last_error
 
         results = result.get("results", [])
 
-        # Add media_type to each result
+        # Add media_type to each result for downstream consumers
         for r in results:
             r["media_type"] = media_type
 
@@ -306,11 +338,15 @@ class MediaMatcher:
         media_type = "tv" if parsed.get("type") == "episode" else "movie"
 
         # Search TMDb
-        results = await self.search_tmdb(
-            title=parsed["title"],
-            year=parsed.get("year"),
-            media_type=media_type
-        )
+        try:
+            results = await self.search_tmdb(
+                title=parsed["title"],
+                year=parsed.get("year"),
+                media_type=media_type
+            )
+        except Exception as exc:
+            logger.warning("TMDb lookup failed while matching %r: %s", filename, exc)
+            return None
 
         if not results:
             return None

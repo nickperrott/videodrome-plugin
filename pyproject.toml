@@ -23,6 +23,8 @@ dependencies = [
     "aiosqlite>=0.20.0",
     "watchdog>=4.0.0",
     "transmission-rpc>=7.0.0",
+    "torrent-search-mcp>=1.1.0",  # Torrent search across multiple providers
+    "crawl4ai>=0.8.0",            # Required by torrent-search-mcp (>=0.8.0 for CVE fix)
 ]
 
 [project.optional-dependencies]

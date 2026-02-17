@@ -95,6 +95,25 @@ class TestMediaMatcher:
             # Verify API was NOT called
             mock_search.movie.assert_not_called()
 
+    async def test_search_tmdb_raises_after_retries(self):
+        """search_tmdb should raise after exhausting retry attempts."""
+        cache = AsyncMock()
+        cache.get.return_value = None
+
+        matcher = MediaMatcher(tmdb_api_key="test-key", cache=cache)
+
+        with patch("tmdbsimple.Search") as mock_search_class, \
+             patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            mock_search = MagicMock()
+            mock_search.movie.side_effect = RuntimeError("temporary TMDb failure")
+            mock_search_class.return_value = mock_search
+
+            with pytest.raises(RuntimeError, match="TMDb search failed after 3 attempts"):
+                await matcher.search_tmdb(title="Inception", year=2010, media_type="movie")
+
+            assert mock_search.movie.call_count == 3
+            assert mock_sleep.await_count == 2
+
     async def test_calculate_confidence_perfect_match(self, mock_tmdb_movie_result):
         """Test confidence scoring for a perfect match."""
         matcher = MediaMatcher(tmdb_api_key="test-key")

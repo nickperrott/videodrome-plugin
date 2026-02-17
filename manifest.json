@@ -71,6 +71,52 @@
       "type": "number",
       "description": "Minimum confidence score for auto-processing (0.0-1.0)",
       "default": 0.85
+    },
+    "TORRENT_SEARCH_PROVIDERS": {
+      "type": "string",
+      "description": "Comma-separated torrent search providers (thepiratebay, nyaa, ygg). Default: thepiratebay",
+      "default": "thepiratebay",
+      "required": false
+    },
+    "YGG_USERNAME": {
+      "type": "string",
+      "description": "YggTorrent username (only needed when ygg is in TORRENT_SEARCH_PROVIDERS)",
+      "required": false
+    },
+    "YGG_PASSWORD": {
+      "type": "string",
+      "description": "YggTorrent password",
+      "sensitive": true,
+      "required": false
+    },
+    "VIDEODROME_NAS_IP": {
+      "type": "string",
+      "description": "TrueNAS / NAS server IP address (e.g. 10.9.8.15) — used by mount_media_volume()",
+      "required": false
+    },
+    "VIDEODROME_NAS_SHARE": {
+      "type": "string",
+      "description": "SMB share name on the NAS (default: MEDIA)",
+      "default": "MEDIA",
+      "required": false
+    },
+    "VIDEODROME_NAS_MOUNT_POINT": {
+      "type": "string",
+      "description": "Local mount point for the NAS share (default: /Volumes/MEDIA)",
+      "default": "/Volumes/MEDIA",
+      "required": false
+    },
+    "VIDEODROME_NAS_AUTO_MOUNT": {
+      "type": "boolean",
+      "description": "Automatically attempt to mount the NAS volume when file access fails",
+      "default": false,
+      "required": false
+    },
+    "OMDB_API_KEY": {
+      "type": "string",
+      "description": "OMDb API key for IMDb ratings and Rotten Tomatoes scores (free tier: 1000 req/day — get one at https://www.omdbapi.com/). Optional — TMDb ratings are used when absent.",
+      "sensitive": true,
+      "required": false
     }
   }
 }
