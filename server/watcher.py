@@ -449,7 +449,7 @@ class IngestWatcher:
             destination = self.file_manager.media_root / plex_path.lstrip("/")
 
             # Copy file
-            copied_path = await self.file_manager.copy_file(
+            copied_path = self.file_manager.copy_file(
                 source=source_path,
                 destination=destination
             )
@@ -712,8 +712,8 @@ class IngestWatcher:
             # Build destination
             destination = self.file_manager.media_root / plex_path.lstrip("/")
 
-            # Copy file
-            copied_path = await self.file_manager.copy_file(
+            # Move file (torrent files live on same volume as Plex)
+            moved_path = self.file_manager.move_file(
                 source=source_path,
                 destination=destination
             )
@@ -721,7 +721,7 @@ class IngestWatcher:
             # Log to history with torrent metadata
             await self.history.add_record(
                 source_path=str(source_path),
-                destination_path=str(copied_path),
+                destination_path=str(moved_path),
                 status=IngestStatus.SUCCESS,
                 tmdb_id=tmdb_id,
                 media_type=media_type,
@@ -729,11 +729,11 @@ class IngestWatcher:
                 metadata={"torrent_hash": torrent_hash}
             )
 
-            logger.info(f"Successfully ingested {source_path} -> {copied_path} (torrent)")
+            logger.info(f"Successfully ingested {source_path} -> {moved_path} (torrent)")
 
             return {
                 "source": str(source_path),
-                "destination": str(copied_path),
+                "destination": str(moved_path),
                 "tmdb_id": tmdb_id,
                 "confidence": confidence,
                 "torrent_hash": torrent_hash
